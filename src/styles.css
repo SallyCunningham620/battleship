@@ -1,0 +1,124 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    text-align: center;
+    padding: 10px;
+}
+
+h2 {
+    padding: 10px;
+}
+
+.board {
+    display: flex;
+    flex-wrap: wrap;    
+    width: 300px;
+    height: 300px;
+    border: 2px solid black; 
+}
+
+.cell {
+    background-color: #eee;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+.cell.miss {
+    background-color: #fff;
+}
+
+.cell.hit {
+    background-color: #f00;
+}
+
+.cell.ship {
+    background-color: #888;
+}
+
+#game-container {
+    display: flex;
+    justify-content: space-around;
+    gap: 5px;
+}
+
+#game-message {
+    padding: 10px;
+}
+
+#bottom-box {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.ships-container {
+    width: 350px;
+    height: 160px;
+    margin: 30px 0;
+    background-color: yellow;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+button {
+    height: 30px;
+    width: 50px;
+}
+
+.destroyer {
+    background-color: brown;
+}
+
+.submarine {
+    background-color: green;
+}
+
+.cruiser {
+    background-color: purple;
+}
+
+.battleship {
+    background: orange;
+}
+
+.carrier {
+    background-color: blue;
+}
+/* Ship Styling */
+.horizontal { display: flex;}
+.vertical { display: flex; flex-direction: column;}
+
+/* Dynamic Size*/
+.destroyer-size.horizontal { width: 60px; height: 30px; margin: 3px}
+.destroyer-size.vertical { width: 30px; height: 60px; margin: 5px}
+
+.submarine-size.horizontal { width: 90px; height: 30px; margin: 3px}
+.submarine-size.vertical { width: 30px; height: 90px; margin: 5px}
+
+.cruiser-size.horizontal { width: 90px; height: 30px; margin: 3px}
+.cruiser-size.vertical { width: 30px; height: 90px; margin: 5px}
+
+.battleship-size.horizontal { width: 120px; height: 30px; margin: 3px}
+.battleship-size.vertical { width: 30px; height: 120px; margin: 5px}
+
+.carrier-size.horizontal { width: 150px; height: 30px; margin: 3px}
+.carrier-size.vertical { width: 30px; height: 150px; margin: 5px}
+
+.hover {
+    background-color: grey;
+}
+
+.boom {
+    background-color: red;
+}
+
+.empty {
+    background-color: grey;
+}
