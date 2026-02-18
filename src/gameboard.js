@@ -1,65 +1,111 @@
-import Ship from '../src/ship.js';
+// src/gameboard.js
+import Ship from './ship.js';
 
-const Gameboard = () => {
-    const board = Array(10).fill(null).map(() => Array(10).fill(null));
-    const missedAttacks = [];
-    const ships = [];
+class Gameboard {
+    constructor(user) {
+        this.user = user;
+        this.board = this.createBoard(user);
+        this.ships = [];
+        this.missedAttacks = [];
+    }
 
-    const isValidCoordinate = (x, y) =>  x >= 0 && x < 10 && y >= 0 && y < 10;
+    createBoard(user) {
+        const gameBoardContainer = document.getElementById(user);
+        if (gameBoardContainer) gameBoardContainer.id = user;
+        return Array(10).fill(null).map(() => Array(10).fill(null))
+    }
 
-    const placeShip = (shipLength, startX, startY, isVertical = false) => {
-        //check if valid
-        for (let i = 0; i < shipLength; i++) {
-            const x = isVertical ? startX + i : startX;
-            const y = isVertical ? startY : startY + i;
+    getValidity(allBoardBlocks, isHorizontal, startIndex, ship) {
+        //not over 100        
+        let validStart = isHorizontal ? 
+        //handle horizontal
+        (startIndex <= 100 - ship.length ? startIndex : 100 - ship.length) :
+        //handle vertical
+        (startIndex <= 100 - 10 * ship.length ? startIndex : startIndex - ship.length * 10 + 10);
 
-            if (!isValidCoordinate(x, y) || board[x][y] !== null){
-                return false; //Invalid placement
+        let shipCells = [];
+
+        for (let i = 0; i < ship.length; i++) {
+            if (isHorizontal) {
+                shipCells.push(allBoardBlocks[Number(validStart) + i]);
+            } else {
+                shipCells.push(allBoardBlocks[Number(validStart) + i * 10])
             }
-        } 
-        const newShip = Ship(shipLength);
-        ships.push(newShip);
-        //console.log(ships);
-        //place ship on board
-        for (let i = 0; i < shipLength; i++) {
-            const x = isVertical ? startX + i : startX;
-            const y = isVertical ? startY : startY + i;
-            board[x][y] = newShip;
         }
-    return true;
-    };
 
-    const receiveAttack = (x, y) => {
-        if (!isValidCoordinate(x, y)) return "Invalid coordinate";
-
-        const target = board[x][y];
-
-        const alreadyMissed = missedAttacks.some(m => m[0] === x && m[1] === y);
-        const isHit = target !== null && target !== 'miss' && target.getHits() > 0;
-        if (alreadyMissed || isHit) return 'Already atacked';
-
-        if (target === null) {
-            board[x][y] = 'miss';
-            missedAttacks.push({x, y});
-            return "Miss"; // Miss
+        let valid;
+        //horizontal
+        if (isHorizontal) {
+            shipCells.every((_shipCell, index) =>
+            valid = shipCells[0].id % 10 !== 10 - (shipCells.length - (index + 1)))
         } else {
-            target.hit();
-            return "Hit"; // Hit
+            //vertical
+            shipCells.every((_shipCell, index) => 
+            valid = shipCells[0].id < 90 + (10 * index + 1)
+            )
         }
-    };
+        let notTaken = shipCells.every(shipCell => !shipCell.classList.contains('taken'));
+        
+        return {shipCells, valid, notTaken};
+    }
 
-    const allShipsSunk = () => {
-        return ships.length > 0 && ships.every(ship => ship.isSunk());
-    };
 
-    return {
-        placeShip,
-        receiveAttack,
-        allShipsSunk,
-        board,
-        getBoard: () => board,
-        getMissedAttacks: () => missedAttacks,
-    };
-};
+    placeShip(user, ship, startId, isVertical) {
+        const allBoardBlocks = document.querySelectorAll(`#${user} .cell`);
+        let randomBoolean = Math.random() < 0.5;
+        let isHorizontal = user === 'player-board' ? !isVertical : randomBoolean;
+        let randomStartIndex = Math.floor(Math.random() * 100); 
+        
+        let startIndex = startId ? startId : randomStartIndex;  
+
+        const {shipCells, valid, notTaken } = this.getValidity(allBoardBlocks, isHorizontal, startIndex, ship);
+
+        if (valid && notTaken) {
+            shipCells.forEach(shipCell => {
+                shipCell.classList.add(ship.name);
+                shipCell.classList.add('taken');
+            })
+        } else {
+        if (user === 'computer-board') this.placeShip(user, ship, startId);
+        if (user === 'player') notDropped = true;
+    }
+}
+      
+
+    hightlightArea(startIndex, ship, isVerticalInput) {
+        const allBoardBlocks = document.querySelectorAll('#player-board .cell');
+        let isHorizontal = !isVerticalInput;
+
+        const { shipCells, valid, notTaken } = this.getValidity(allBoardBlocks, isHorizontal, startIndex, ship);
+
+        if (valid && notTaken) {
+            shipCells.forEach(shipCell => {
+                shipCell.classList.add('hover');
+                setTimeout(() => shipCell.classList.remove('hover'), 500);
+            })
+        }
+    }
+    
+    receiveAttack(x, y) {
+        const cell = this.board[x][y];
+        console.log(this.board);
+        console.log(cell);
+        if (cell === null) {
+            if (!this.missedAttacks.some(m => m[0] === x && m[1] === y)) {
+                this.missedAttacks.push([x, y]);
+            }
+            return 'miss';
+        } else if (cell.ship && !cell.hit) {
+            cell.ship.hit();
+            cell.hit = true;
+            return 'hit';
+        }
+        return 'Already hit, please retry.';
+    }
+
+    allShipsSunk(user) {
+        return user.ships.every(ship => ship.isSunk());
+    }
+}
 
 export default Gameboard;

@@ -1,26 +1,33 @@
-import Gameboard from "./gameboard";
+import Gameboard from './gameboard.js';
 
-const Player = (name, isComputer = false) => {
-    const gameboard = Gameboard();
-    const attackCoordinates = new Set();
-
-    const randomCoordinate = () => {
-        return [Math.floor(Math.random() * 10), Math.floor(Math.random() * 10)];
+// src/player.js
+class Player {
+    constructor(name, isComputer = false) {
+        this.name = name;
+        this.board = new Gameboard();
+        this.isComputer = isComputer;
+        this.usedAttacks = new Set();
     }
 
-    const attackEnemey = (enemyGameboard, x, y) => {
-        if(isComputer) {
-            let coords = randomCoordinate();
-            while (attackCoordinates.has(JSON.stringify(coords))) {
-                coords = randomCoordinate();
-            }
-            x = coords[0];
-            y = coords[1];
-            attackCoordinates.add(JSON.stringify(coords));
-        }
+    // For a human player
+    attack(enemyGameboard, x, y) {
+        console.log(enemyGameboard);
+        console.log(enemyGameboard.receiveAttack());
         return enemyGameboard.receiveAttack(x, y);
     }
-    return { name, gameboard, isComputer, attackEnemey, getAttackedCoordinates: () => attackCoordinates };
-};
+
+    // For the computer player, random attack
+    randomAttack(enemyGameboard) {
+        let x, y, attackStr;
+        do {
+            x = Math.floor(Math.random() * 10);
+            y = Math.floor(Math.random() * 10);
+            attackStr = `${x},${y}`;
+        } while (this.usedAttacks.has(attackStr));
+
+        this.usedAttacks.add(attackStr);
+        return enemyGameboard.receiveAttack(x, y);
+    }
+}
 
 export default Player;
