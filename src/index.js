@@ -11,14 +11,90 @@ const player = new Player("Human");
 const computer = new Player("Computer", true);
 const infoDisplay = document.getElementById('game-message');
 const turnDisplay = document.getElementById('turn-message');
-//let gameOver = false;
-let isPlayerTurn ;
-let gameActive = true;
 
 const shipsContainer = document.querySelector('.ships-container');
 const flipButton = document.querySelector('#flip');
 const startButton = document.querySelector('#start-button');
-let isVertical;
+const resetButton = document.querySelector('#reset-button');
+
+let isPlayerTurn = true;
+let gameActive = true;
+let isVertical = false;
+let notDropped;
+let draggedShip;
+let playerAttacks = [];
+let computerAttacks = [];
+let playerSunkShips = [];
+let computerSunkShips = [];
+
+const destroyer = new Ship('destroyer', 2);
+const submarine = new Ship('submarine', 3);
+const cruiser = new Ship('cruiser', 3);
+const battleship = new Ship('battleship', 4);
+const carrier = new Ship('carrier', 5);
+
+let ships = [destroyer, submarine, cruiser, battleship, carrier];
+
+console.log(isPlayerTurn,
+    gameActive, isVertical, notDropped,
+    draggedShip,
+    playerAttacks,
+    computerAttacks,
+    playerSunkShips,
+    computerSunkShips,
+    ships);
+function resetGame() {
+    isPlayerTurn = true;
+    gameActive = true;
+    isVertical = false;
+    notDropped = undefined;
+    draggedShip = undefined;
+    playerAttacks = [];
+    computerAttacks = [];
+    playerSunkShips = [];
+    computerSunkShips = [];
+    ships = [destroyer, submarine, cruiser, battleship, carrier];
+    
+    console.log(isPlayerTurn,
+    gameActive, isVertical, notDropped,
+    draggedShip,
+    playerAttacks,
+    computerAttacks,
+    playerSunkShips,
+    computerSunkShips,
+    ships);
+
+    const allCells = document.querySelectorAll('.cell');
+    allCells.forEach(cell => {
+        cell.className = 'cell'; // Remove other classes
+        cell.removeEventListener('click', handleCellClick);
+    });
+
+    shipsContainer.innerHTML = `
+            <div id="0" class="destroyer-size destroyer horizontal" data-size="2" draggable="true"></div>
+            <div id="1" class="submarine-size submarine horizontal" data-size="3" draggable="true"></div>
+            <div id="2" class="cruiser-size cruiser horizontal" data-size="3" draggable="true"></div>
+            <div id="3" class="battleship-size battleship horizontal" data-size="4" draggable="true"></div>
+            <div id="4" class="carrier-size carrier horizontal" data-size="5" draggable="true"></div>
+    `;
+
+    const newShipOptions = Array.from(shipsContainer.children);
+    
+    newShipOptions.forEach(shipOption => {
+        shipOption.addEventListener('dragstart', dragStart);
+    });/*
+    shipOptions.forEach(shipOption => {
+        shipOption.addEventListener('dragstart', dragStart)
+        console.log(shipOption.id);
+    });*/
+
+    updateMessage('Game reset. Place your ships and click start.');
+    turnMessage('');
+    placeComputerShipsRandomly();
+    dragOverNDrop();
+}
+
+resetButton.addEventListener('click', resetGame);
 //Option choosing
 function flip() {
     isVertical = !isVertical;
@@ -38,22 +114,12 @@ function flip() {
 
 flipButton.addEventListener('click', flip);
 
-const destroyer = new Ship('destroyer', 2);
-const submarine = new Ship('submarine', 3);
-const cruiser = new Ship('cruiser', 3);
-const battleship = new Ship('battleship', 4);
-const carrier = new Ship('carrier', 5);
-
-const ships = [destroyer, submarine, cruiser, battleship, carrier];
-
-let notDropped;
-
 //Drag player ships
-let draggedShip;
 
 const shipOptions = Array.from(shipsContainer.children);
 shipOptions.forEach(shipOption => {
     shipOption.addEventListener('dragstart', dragStart)
+    console.log(shipOption.id);
 });
 
 function dragStart(e) {
@@ -69,10 +135,11 @@ function dragOver(e) {
 
 function dropShip(e) {
     e.preventDefault();
+    if (!draggedShip) return;
+    
     const startId = e.target.id;
     const ship = ships[draggedShip.id];
     player.board.placeShip('player-board', ship, startId, isVertical)
-//    playerBoard.placeShip('player-board', ship, startId, isVertical);
     if (!notDropped) {
         draggedShip.remove()
     }
@@ -87,15 +154,15 @@ function dragOverNDrop() {
 }
 
 function startGame() {
-    if (isPlayerTurn === undefined) {
+    if (isPlayerTurn === true) {
         if (shipsContainer.children.length != 0) {
-            updateMessage('Please place all your places first.');
+            updateMessage('Please place all your ships first.');
         } else {
             const allBoardCells = document.querySelectorAll('#computer-board .cell');
             allBoardCells.forEach(cell => cell.addEventListener('click', handleCellClick));
             isPlayerTurn = true;
-            turnMessage('Your turn');
-            updateMessage('The game started.');
+            turnMessage('Your turn.');
+            updateMessage('The game started. Select a cell to attack on the computer board.');
         }
     }
 }
@@ -137,7 +204,7 @@ function computerTurn() {
         setTimeout(() => {
             isPlayerTurn = true;
             turnMessage('Player Go!');
-            updateMessage('Select a cell to attack on computer board.');
+            updateMessage('Select a cell to attack on the computer board.');
             const allComputerCells = document.querySelectorAll('#computer-board .cell');
             allComputerCells.forEach(cell => cell.addEventListener('click', handleCellClick));
         }, 4000);
@@ -147,21 +214,6 @@ function computerTurn() {
         return;
     }
 }
-/*
-function gameOver(winner) {
-    gameActive = false;
-    updateMessage(`${winner} wins! Game over.`);
-    // Remove event listeners from computer board
-    const computerCells = document.getElementById('computer-board').querySelectorAll('.cell');
-    computerCells.forEach(cell => cell.removeEventListener('click', handleCellClick));
-}
-//start game with updateMessage("Game started! Your turn to attack the computer's board");
-*/
-
-let playerAttacks = [];
-let computerAttacks = [];
-const playerSunkShips = [];
-const computerSunkShips = [];
 
 function handleCellClick(e) {
     if (gameActive && isPlayerTurn) {
@@ -191,6 +243,8 @@ function handleCellClick(e) {
 }
 
 function gameActiveCheck(user, userAttacks, userSunkShips) {
+    //seperate ships into computer and player ships?
+    let currentUser = (user === 'player-board')
     function checkShip(shipName, shipLength) {
         if (
             userAttacks.filter(currentShipsName => currentShipsName === shipName).length === shipLength
@@ -227,7 +281,6 @@ function placeComputerShipsRandomly() {
     ships.forEach(ship => computer.board.placeShip('computer-board', ship));
 }
 
-//add a reset game
 function renderBoard(boardObj, elementId, isEnemyBoard) {
     const boardElement = document.getElementById(elementId);
     for (let i = 0; i < 10; i++) {
@@ -273,7 +326,8 @@ function initGame() {
     renderBoards();
     placeComputerShipsRandomly();
     dragOverNDrop();
-    updateMessage("Place your ships and click Start.");
+    updateMessage("Please place your ships and click Start.");
+    turnMessage('');
 }
 
 initGame();

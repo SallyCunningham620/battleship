@@ -62,7 +62,7 @@ h2 {
     margin: 30px 0;
     background-color: yellow;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap !important;
     justify-content: center;
     align-items: center;
 }
