@@ -28,17 +28,6 @@ h2 {
     box-sizing: border-box;
 }
 
-.cell.miss {
-    background-color: #fff;
-}
-
-.cell.hit {
-    background-color: #f00;
-}
-
-.cell.ship {
-    background-color: #888;
-}
 
 #game-container {
     display: flex;
@@ -115,10 +104,10 @@ button {
     background-color: grey;
 }
 
-.boom {
+.hit {
     background-color: red;
 }
 
-.empty {
-    background-color: grey;
+.miss {
+    background-color: rgb(148, 147, 147);
 }

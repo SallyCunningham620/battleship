@@ -8,7 +8,7 @@ class Player {
         this.isComputer = isComputer;
         this.usedAttacks = new Set();
     }
-
+/*
     // For a human player
     attack(enemyGameboard, x, y) {
         console.log(enemyGameboard);
@@ -27,7 +27,7 @@ class Player {
 
         this.usedAttacks.add(attackStr);
         return enemyGameboard.receiveAttack(x, y);
-    }
+    }*/
 }
 
 export default Player;

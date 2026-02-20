@@ -15,6 +15,31 @@ class Gameboard {
         return Array(10).fill(null).map(() => Array(10).fill(null))
     }
 
+    renderBoard(elementId, isEnemyBoard) {
+    const boardElement = document.getElementById(elementId);
+    for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 10; j++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.dataset.x = i;
+            cell.dataset.y = j;
+
+            const cellId = (i * 10) + j;
+            cell.id = cellId;
+            boardElement.appendChild(cell);
+        }
+    }
+}
+
+    resetBoard(user) {
+        const gameBoardContainer = document.getElementById(user);
+        if (gameBoardContainer) gameBoardContainer.id = user;
+        this.ships = [];
+        this.missedAttacks =[];
+        return Array(10).fill(null).map(() => Array(10).fill(null))
+
+    }
+
     getValidity(allBoardBlocks, isHorizontal, startIndex, ship) {
         //not over 100        
         let validStart = isHorizontal ? 
@@ -84,27 +109,6 @@ class Gameboard {
                 setTimeout(() => shipCell.classList.remove('hover'), 500);
             })
         }
-    }
-    
-    receiveAttack(x, y) {
-        const cell = this.board[x][y];
-        console.log(this.board);
-        console.log(cell);
-        if (cell === null) {
-            if (!this.missedAttacks.some(m => m[0] === x && m[1] === y)) {
-                this.missedAttacks.push([x, y]);
-            }
-            return 'miss';
-        } else if (cell.ship && !cell.hit) {
-            cell.ship.hit();
-            cell.hit = true;
-            return 'hit';
-        }
-        return 'Already hit, please retry.';
-    }
-
-    allShipsSunk(user) {
-        return user.ships.every(ship => ship.isSunk());
     }
 }
 
