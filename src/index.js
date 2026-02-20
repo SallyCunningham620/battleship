@@ -1,3 +1,6 @@
+//remove sunkships from shipattacks
+
+
 import "./styles.css";
 
 // src/index.js
@@ -20,30 +23,35 @@ let gameActive = true;
 let isVertical = false;
 let notDropped;
 let draggedShip;
+let playerShips = shipFleet();
+let computerShips = shipFleet();
 let playerAttacks = [];
 let computerAttacks = [];
 let playerSunkShips = [];
 let computerSunkShips = [];
 
-const destroyer = new Ship('destroyer', 2);
-const submarine = new Ship('submarine', 3);
-const cruiser = new Ship('cruiser', 3);
-const battleship = new Ship('battleship', 4);
-const carrier = new Ship('carrier', 5);
-
-let ships = [destroyer, submarine, cruiser, battleship, carrier];
-
+function shipFleet() {
+    return[
+        new Ship('destroyer', 2),
+        new Ship('submarine', 3),
+        new Ship('cruiser', 3),
+        new Ship('battleship', 4),
+        new Ship('carrier', 5)
+    ];
+}
 function resetGame() {
     isPlayerTurn = true;
     gameActive = true;
     isVertical = false;
     notDropped = undefined;
     draggedShip = undefined;
+    let playerShips = shipFleet();
+    let computerShips = shipFleet();
     playerAttacks = [];
     computerAttacks = [];
     playerSunkShips = [];
     computerSunkShips = [];
-    ships = ['destroyer', 'submarine', 'cruiser', 'battleship', 'carrier'];
+    //ships = ['destroyer', 'submarine', 'cruiser', 'battleship', 'carrier'];
 
     player.board.resetBoard('player-board');
     computer.board.resetBoard('computer-board');
@@ -109,7 +117,7 @@ function dragStart(e) {
 
 function dragOver(e) {
     e.preventDefault();
-    const ship = ships[draggedShip.id];
+    const ship = playerShips[draggedShip.id];
     player.board.hightlightArea(e.target.id, ship, isVertical);
 }
 
@@ -118,7 +126,7 @@ function dropShip(e) {
     if (!draggedShip) return;
 
     const startId = e.target.id;
-    const ship = ships[draggedShip.id];
+    const ship = playerShips[draggedShip.id];
     player.board.placeShip('player-board', ship, startId, isVertical)
     if (!notDropped) {
         draggedShip.remove()
@@ -173,7 +181,7 @@ function computerTurn() {
                 console.log(classes);
                 let shipName = classes.find(c => c !== 'cell' && c !== 'taken' && c !== 'hit');
                 console.log(shipName);
-                let ship = ships.find(s => s.name === shipName);
+                let ship = playerShips.find(s => s.name === shipName);
                 console.log(ship);
                 if (ship && !ship.sunk) {
                     ship.hit();
@@ -185,7 +193,7 @@ function computerTurn() {
                         updateMessage(`The computer sunk your ${ship.name}!`);
                         computerSunkShips.push(ship.name);
                         console.log(computerSunkShips);
-                        ships = ships.filter(s => !s.sunk);
+                        let ships = computerShips.filter(s => !s.sunk);//??
                         console.log(ships);
                     }
                     gameActiveCheck('computer-board', computerSunkShips);
@@ -219,7 +227,7 @@ function handleCellClick(e) {
             );
             console.log(shipName);
             // Find the corresponding Ship instance from your computerShips array
-            let ship = ships.find(s => s.name === shipName);
+            let ship = computerShips.find(s => s.name === shipName);
             console.log(ship);
             if (ship && !ship.sunk) {
                 ship.hit();
@@ -232,7 +240,7 @@ function handleCellClick(e) {
                     updateMessage(`You sunk the computer's ${ship.name}!`);
                     playerSunkShips.push(ship.name);
                     console.log(playerSunkShips);
-                    ships = ships.filter(s => !s.sunk);
+                    let ships = computerShips.filter(s => !s.sunk);
                     console.log(ships);
                     //console.log(playerAttacks)
                 }
@@ -269,34 +277,9 @@ function gameActiveCheck(user, userSunkShips) {
         }
     }
 }
- /*   console.log(user);
-    console.log(userAttacks);
-    console.log(userSunkShips);
-    function checkShip(shipName, shipLength) {
-        console.log(shipName);
-        console.log(shipLength);
-        //console.log(shipName);
-  /*      if (
-            userAttacks.filter(currentShipsName => currentShipsName === shipName).length === shipLength
-        ) {
-            if (user === 'computer-board') {
-                updateMessage(`The computer sunk your ${shipName}`);
-                computerAttacks = userAttacks.filter(currentShipName => currentShipName !== shipName)
-                console.log(computerAttacks);
-                userSunkShips.push(shipName);
-                console.log(userSunkShips);
-            }
-        }
-    }
-    checkShip('destroyer', 2);
-    checkShip('submarine', 3);
-    checkShip('cruiser', 3);
-    checkShip('battleship', 4);
-    checkShip('carrier', 5);
-*/
 
 function placeComputerShipsRandomly() {  
-    ships.forEach(ship => computer.board.placeShip('computer-board', ship));
+    playerShips.forEach(ship => computer.board.placeShip('computer-board', ship));
 }
 
 function renderBoards() {
