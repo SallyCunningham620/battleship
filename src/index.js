@@ -193,8 +193,8 @@ function computerTurn() {
                         updateMessage(`The computer sunk your ${ship.name}!`);
                         computerSunkShips.push(ship.name);
                         console.log(computerSunkShips);
-                        let ships = computerShips.filter(s => !s.sunk);//??
-                        console.log(ships);
+                        computerAttacks = computerAttacks.filter(attackName => attackName !== shipName);
+                        console.log(computerAttacks)
                     }
                     gameActiveCheck('computer-board', computerSunkShips);
                     
@@ -214,7 +214,7 @@ function computerTurn() {
         }, 4000);
 
     } else { 
-        alert('The game is over.');
+        alert('The game is over. Reset the game to play again');
         return;
     }
 }
@@ -240,9 +240,10 @@ function handleCellClick(e) {
                     updateMessage(`You sunk the computer's ${ship.name}!`);
                     playerSunkShips.push(ship.name);
                     console.log(playerSunkShips);
-                    let ships = computerShips.filter(s => !s.sunk);
-                    console.log(ships);
-                    //console.log(playerAttacks)
+                    playerAttacks = playerAttacks.filter(attackName => attackName !== shipName);
+                    console.log(playerAttacks)
+
+
                 }
                 gameActiveCheck('player-board', playerSunkShips);
             }
