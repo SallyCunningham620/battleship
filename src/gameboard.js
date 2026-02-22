@@ -1,12 +1,10 @@
 // src/gameboard.js
-import Ship from './ship.js';
 
 class Gameboard {
     constructor(user) {
         this.user = user;
         this.board = this.createBoard(user);
         this.ships = [];
-        this.missedAttacks = [];
     }
 
     createBoard(user) {
@@ -35,40 +33,45 @@ class Gameboard {
         const gameBoardContainer = document.getElementById(user);
         if (gameBoardContainer) gameBoardContainer.id = user;
         this.ships = [];
-        this.missedAttacks =[];
         return Array(10).fill(null).map(() => Array(10).fill(null))
 
     }
 
-    getValidity(allBoardBlocks, isHorizontal, startIndex, ship) {
-        //not over 100        
+    getValidity(allBoardCells, isHorizontal, startIndex, ship) {      
+        //boundary correction
         let validStart = isHorizontal ? 
-        //handle horizontal
+        //handle horizontal, shifts the start position to the left 
         (startIndex <= 100 - ship.length ? startIndex : 100 - ship.length) :
-        //handle vertical
+        //handle vertical, shifts the start position upward
         (startIndex <= 100 - 10 * ship.length ? startIndex : startIndex - ship.length * 10 + 10);
 
         let shipCells = [];
 
         for (let i = 0; i < ship.length; i++) {
+            //identify cells
             if (isHorizontal) {
-                shipCells.push(allBoardBlocks[Number(validStart) + i]);
+                //adds 1 to the index to move across a row
+                shipCells.push(allBoardCells[Number(validStart) + i]);
             } else {
-                shipCells.push(allBoardBlocks[Number(validStart) + i * 10])
+                //adds 10 to the index to move down a column
+                shipCells.push(allBoardCells[Number(validStart) + i * 10])
             }
         }
 
+        //edge wrapping protection
         let valid;
         //horizontal
         if (isHorizontal) {
+            //ship stays within the same row, stopping it from wrapping around to the next line
             shipCells.every((_shipCell, index) =>
             valid = shipCells[0].id % 10 !== 10 - (shipCells.length - (index + 1)))
         } else {
-            //vertical
+            //starting ID allows the vertical ship to exist without going beyond the 100
             shipCells.every((_shipCell, index) => 
             valid = shipCells[0].id < 90 + (10 * index + 1)
             )
         }
+        //ensures that all targeted cells are free
         let notTaken = shipCells.every(shipCell => !shipCell.classList.contains('taken'));
         
         return {shipCells, valid, notTaken};
@@ -76,14 +79,15 @@ class Gameboard {
 
 
     placeShip(user, ship, startId, isVertical) {
-        const allBoardBlocks = document.querySelectorAll(`#${user} .cell`);
+        //select user cells
+        const allBoardCells = document.querySelectorAll(`#${user} .cell`);
         let randomBoolean = Math.random() < 0.5;
         let isHorizontal = user === 'player-board' ? !isVertical : randomBoolean;
         let randomStartIndex = Math.floor(Math.random() * 100); 
         
         let startIndex = startId ? startId : randomStartIndex;  
 
-        const {shipCells, valid, notTaken } = this.getValidity(allBoardBlocks, isHorizontal, startIndex, ship);
+        const {shipCells, valid, notTaken } = this.getValidity(allBoardCells, isHorizontal, startIndex, ship);
 
         if (valid && notTaken) {
             shipCells.forEach(shipCell => {
@@ -97,11 +101,12 @@ class Gameboard {
 }
       
 
-    hightlightArea(startIndex, ship, isVerticalInput) {
-        const allBoardBlocks = document.querySelectorAll('#player-board .cell');
+    hoverArea(startIndex, ship, isVerticalInput) {
+        //select all player cells
+        const allBoardCells = document.querySelectorAll('#player-board .cell');
         let isHorizontal = !isVerticalInput;
 
-        const { shipCells, valid, notTaken } = this.getValidity(allBoardBlocks, isHorizontal, startIndex, ship);
+        const { shipCells, valid, notTaken } = this.getValidity(allBoardCells, isHorizontal, startIndex, ship);
 
         if (valid && notTaken) {
             shipCells.forEach(shipCell => {

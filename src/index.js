@@ -1,11 +1,9 @@
-//move computerTurn to player.js
 import "./styles.css";
 
 // src/index.js
-import Gameboard from './gameboard.js';
 import Ship from './ship.js';
 import Player from './player.js';
-
+//define const and let
 const player = new Player("Human");
 const computer = new Player("Computer", true);
 const infoDisplay = document.getElementById('game-message');
@@ -29,6 +27,7 @@ let computerAttacks = [];
 let playerSunkShips = [];
 let computerSunkShips = [];
 
+//define all ships for players
 function shipFleet() {
     return[
         new Ship('destroyer', 2),
@@ -38,6 +37,8 @@ function shipFleet() {
         new Ship('carrier', 5)
     ];
 }
+
+//reset game
 function resetGame() {
     isPlayerTurn = true;
     gameActive = true;
@@ -51,15 +52,16 @@ function resetGame() {
     computerAttacks = [];
     playerSunkShips = [];
     computerSunkShips = [];
-    //ships = ['destroyer', 'submarine', 'cruiser', 'battleship', 'carrier'];
 
+    //reset and recreate boards
     player.board.resetBoard('player-board');
     computer.board.resetBoard('computer-board');
 
+    //find all cells
     const allCells = document.querySelectorAll('.cell');
     allCells.forEach(cell => {
-        cell.className = 'cell'; // Remove other classes
-        cell.removeEventListener('click', handleCellClick);
+        cell.className = 'cell'; // remove other classes
+        cell.removeEventListener('click', handleCellClick); //remove listener
     });
 
     shipsContainer.innerHTML = `
@@ -70,10 +72,11 @@ function resetGame() {
             <div id="4" class="carrier-size carrier horizontal" data-size="5" draggable="true"></div>
     `;
 
+    //recreate ship options
     const newShipOptions = Array.from(shipsContainer.children);
     
     newShipOptions.forEach(shipOption => {
-        shipOption.addEventListener('dragstart', dragStart);
+        shipOption.addEventListener('dragstart', dragStart); //drag listener
     });
 
     updateMessage('Game reset. Place your ships and click start.');
@@ -81,17 +84,17 @@ function resetGame() {
     placeComputerShipsRandomly();
     dragOverNDrop();
 }
-
 resetButton.addEventListener('click', resetGame);
-//Option choosing
+
 function flip() {
     //flip ships horizontal and vertical
     isVertical = !isVertical;
     //adjust container for flip
     shipsContainer.style.flexWrap = isVertical ? 'nowrap' : 'wrap';
-    
+    //select ships
     const shipsArr = Array.from(shipsContainer.children)
     shipsArr.forEach(shipArr => {
+        //switch class names
         if (isVertical) {
             shipArr.classList.remove('horizontal');
             shipArr.classList.add('vertical');
@@ -104,7 +107,7 @@ function flip() {
 
 flipButton.addEventListener('click', flip);
 
-//Drag player ships
+//select and drag player ships
 const shipOptions = Array.from(shipsContainer.children);
 shipOptions.forEach(shipOption => {
     shipOption.addEventListener('dragstart', dragStart)
@@ -117,16 +120,17 @@ function dragStart(e) {
 
 function dragOver(e) {
     e.preventDefault();
+    //select with id
     const ship = playerShips[draggedShip.id];
-    player.board.hightlightArea(e.target.id, ship, isVertical);
+    player.board.hoverArea(e.target.id, ship, isVertical);
 }
 
 function dropShip(e) {
     e.preventDefault();
     if (!draggedShip) return;
-
     const startId = e.target.id;
     const ship = playerShips[draggedShip.id];
+    //place ship when dropped
     player.board.placeShip('player-board', ship, startId, isVertical)
     if (!notDropped) {
         draggedShip.remove()
@@ -134,6 +138,7 @@ function dropShip(e) {
 }
 
 function dragOverNDrop() {
+    //select player cells
     const allPlayerCells = document.querySelectorAll(`#player-board .cell`);
     allPlayerCells.forEach(playerCell => {
         playerCell.addEventListener('dragover', dragOver);
@@ -143,14 +148,16 @@ function dragOverNDrop() {
 
 function startGame() {
     if (isPlayerTurn === true) {
+        //make sure ships are all placed
         if (shipsContainer.children.length != 0) {
-            updateMessage('Please place all your ships first.');
+            updateMessage('Please place all your ships first and then click start.');
         } else {
+            //select all computer cells
             const allBoardCells = document.querySelectorAll('#computer-board .cell');
             allBoardCells.forEach(cell => cell.addEventListener('click', handleCellClick));
             isPlayerTurn = true;
             turnMessage('Your turn.');
-            updateMessage('The game started. Select a cell to attack on the computer board.');
+            updateMessage('Game started. Select a cell to attack on the computer board.');
         }
     }
 }
@@ -158,31 +165,24 @@ function startGame() {
 startButton.addEventListener ('click', startGame);
 
 function computerTurn() {
-    console.log(gameActive);
     if (gameActive) {
         turnMessage('Computer Turn!');
         updateMessage(' The computer is thinking...');
-        console.log(player);
         setTimeout(() => {
             const {ship, cell, shipName} = computer.computerAttack(playerShips)
-            console.log(ship);
-             if (ship && !ship.sunk) {
-                    ship.hit();
-                    cell.classList.add('hit');
-                    updateMessage('The computer hit your ship!');
-                    computerAttacks.push(shipName);
-                    console.log(computerAttacks);
-                    if (ship.isSunk()) {
-                        updateMessage(`The computer sunk your ${ship.name}!`);
-                        computerSunkShips.push(ship.name);
-                        console.log(computerSunkShips);
-                        computerAttacks = computerAttacks.filter(attackName => attackName !== shipName);
-                        console.log(computerAttacks)
-                    }
-                    gameActiveCheck('computer-board', computerSunkShips);
-                    
+            if (ship && !ship.sunk) {
+                ship.hit(); //increment ship hits
+                cell.classList.add('hit');
+                updateMessage('The computer hit your ship!');
+                computerAttacks.push(shipName);//add shipName to computerAttacks
+                if (ship.isSunk()) {
+                    updateMessage(`The computer sunk your ${ship.name}!`);
+                    computerSunkShips.push(ship.name);
+                    computerAttacks = computerAttacks.filter(attackName => attackName !== shipName); // remove sunkShips from computerAttacks
+                }
+                gameActiveCheck('computer-board', computerSunkShips);
             } else {
-                    updateMessage('Nothing hit this time.');
+                updateMessage('Nothing hit this time.');
             }
         }, 2000)
 
@@ -190,6 +190,7 @@ function computerTurn() {
             isPlayerTurn = true;
             turnMessage('Player Go!');
             updateMessage('Select a cell to attack on the computer board.');
+            //select computer cells
             const allComputerCells = document.querySelectorAll('#computer-board .cell');
             allComputerCells.forEach(cell => cell.addEventListener('click', handleCellClick));
         }, 4000);
@@ -204,33 +205,29 @@ function handleCellClick(e) {
     if (gameActive && isPlayerTurn) {
         const { ship, shipName, alreadyAttacked } = player.playerAttack(e, computerShips);
         if (alreadyAttacked) {
-             updateMessage('Cell already attacked, please try again.');
-             return;
+            updateMessage('Cell already attacked, please try again.');
+            return;
         }
-        console.log(ship);
         if (ship && !ship.sunk) {
-            ship.hit();
+            ship.hit(); //increment ship hits
             e.target.classList.add('hit');
             updateMessage('Computer ship hit!');
-            playerAttacks.push(shipName);
-            console.log(playerAttacks);
+            playerAttacks.push(shipName); //add shipName to playerAttacks
             
             if (ship.isSunk()) {
                 updateMessage(`You sunk the computer's ${ship.name}!`);
                 playerSunkShips.push(ship.name);
-                console.log(playerSunkShips);
-                playerAttacks = playerAttacks.filter(attackName => attackName !== shipName);
-                console.log(playerAttacks)
+                playerAttacks = playerAttacks.filter(attackName => attackName !== shipName); //remove sunkShips from playerAttacks
             }
             gameActiveCheck('player-board', playerSunkShips);
         } else {
             updateMessage('No ships hit.');
-            }
+        }
         isPlayerTurn = false;
+        //select computer cells
         const allBoardCells = document.querySelectorAll('#computer-board .cell');
         allBoardCells.forEach(cell => cell.replaceWith(cell.cloneNode(true)));
         setTimeout(computerTurn, 3000);
-
     } else {
         alert('The game is over. Reset the game to play again');
         return;
@@ -238,18 +235,18 @@ function handleCellClick(e) {
 }
 
 function gameActiveCheck(user, userSunkShips) {
-    console.log(user);
-    console.log(userSunkShips);
+    //check after hits
     if (user === 'player-board'){
         if (userSunkShips.length === 5) {
-        updateMessage('You sunk all the computer ships. YOU WON!');
-        turnMessage('');
-        gameActive = false;
+            updateMessage('You sunk all the computer ships. YOU WON!');
+            turnMessage('');
+            gameActive = false;
        }
     }
     if (user === 'computer-board') {
         if (userSunkShips.length === 5) {
             updateMessage(' The computer sunk all your ships. You lost.');
+            turnMessage('');
             gameActive = false;
         }
     }
