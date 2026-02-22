@@ -254,6 +254,7 @@ function gameActiveCheck(user, userSunkShips) {
 
 function placeComputerShipsRandomly() {  
     playerShips.forEach(ship => computer.board.placeShip('computer-board', ship));
+    turnMessage('Computer ships are placed.')
 }
 
 function renderBoards() {
@@ -273,7 +274,6 @@ function initGame() {
     placeComputerShipsRandomly();
     dragOverNDrop();
     updateMessage("Please place your ships and click Start.");
-    turnMessage('');
 }
 
 initGame();
