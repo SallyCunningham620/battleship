@@ -37,76 +37,66 @@ class Gameboard {
 
     }
 
-    getValidity(allBoardCells, isHorizontal, startIndex, ship) {      
-        //boundary correction
-        let validStart = isHorizontal ? 
-        //handle horizontal, shifts the start position to the left 
-        (startIndex <= 100 - ship.length ? startIndex : 100 - ship.length) :
-        //handle vertical, shifts the start position upward
-        (startIndex <= 100 - 10 * ship.length ? startIndex : startIndex - ship.length * 10 + 10);
+    getValidity(allBoardCells, isHorizontal, startRow, startCol, ship) {      
+        if (isHorizontal) {
+            if (startCol + ship.length > 10) return { valid: false, notTaken: false, shipCells: [] }; // Ship goes off right edge
+        } else {
+            if (startRow + ship.length > 10) return { valid: false, notTaken: false, shipCells: [] };; // Ship goes off bottom edge
+        };
 
         let shipCells = [];
 
         for (let i = 0; i < ship.length; i++) {
-            //identify cells
-            if (isHorizontal) {
-                //adds 1 to the index to move across a row
-                shipCells.push(allBoardCells[Number(validStart) + i]);
-            } else {
-                //adds 10 to the index to move down a column
-                shipCells.push(allBoardCells[Number(validStart) + i * 10])
-            }
-        }
+            let r = isHorizontal ? startRow : startRow + i;
+            let c = isHorizontal ? startCol + i : startCol;
+            let index = (r * 10) + c;
 
-        //edge wrapping protection
-        let valid;
-        //horizontal
-        if (isHorizontal) {
-            //ship stays within the same row, stopping it from wrapping around to the next line
-            shipCells.every((_shipCell, index) =>
-            valid = shipCells[0].id % 10 !== 10 - (shipCells.length - (index + 1)))
-        } else {
-            //starting ID allows the vertical ship to exist without going beyond the 100
-            shipCells.every((_shipCell, index) => 
-            valid = shipCells[0].id < 90 + (10 * index + 1)
-            )
+            if (index < 0 || index>= allBoardCells.length) {
+                return { valid: false, notTaken: false, shipCells: [] };
+            }
+            shipCells.push(allBoardCells[index]);
+            console.log(shipCells);
         }
         //ensures that all targeted cells are free
         let notTaken = shipCells.every(shipCell => !shipCell.classList.contains('taken'));
-        
+        let valid = true;     
         return {shipCells, valid, notTaken};
     }
 
 
-    placeShip(user, ship, startId, isVertical) {
+    placeShip(user, ship, row, col, isVertical) {
         //select user cells
         const allBoardCells = document.querySelectorAll(`#${user} .cell`);
         let randomBoolean = Math.random() < 0.5;
         let isHorizontal = user === 'player-board' ? !isVertical : randomBoolean;
-        let randomStartIndex = Math.floor(Math.random() * 100); 
-        
-        let startIndex = startId ? startId : randomStartIndex;  
+        let randomRowIndex = Math.floor(Math.random() * 10);
+        let randomColIndex = Math.floor(Math.random() * 10); 
 
-        const {shipCells, valid, notTaken } = this.getValidity(allBoardCells, isHorizontal, startIndex, ship);
+        let startRow = (row !== null && row !== undefined) ? row : randomRowIndex;
+
+        let startCol = (col !== null && col !== undefined) ? col : randomColIndex;  
+
+        const {shipCells, valid, notTaken } = this.getValidity(allBoardCells, isHorizontal, startRow, startCol, ship);
 
         if (valid && notTaken) {
             shipCells.forEach(shipCell => {
                 shipCell.classList.add(ship.name);
                 shipCell.classList.add('taken');
             })
+            return true;
         } else {
-        if (user === 'computer-board') this.placeShip(user, ship, startId);
-        if (user === 'player') notDropped = true;
+        if (user === 'computer-board') this.placeShip(user, ship);
+        if (user === 'player-board') return false;
     }
 }
       
 
-    hoverArea(startIndex, ship, isVerticalInput) {
+    hoverArea(startRow, startCol, ship, isVerticalInput) {
         //select all player cells
         const allBoardCells = document.querySelectorAll('#player-board .cell');
         let isHorizontal = !isVerticalInput;
 
-        const { shipCells, valid, notTaken } = this.getValidity(allBoardCells, isHorizontal, startIndex, ship);
+        const { shipCells, valid, notTaken } = this.getValidity(allBoardCells, isHorizontal, startRow, startCol, ship);
 
         if (valid && notTaken) {
             shipCells.forEach(shipCell => {
