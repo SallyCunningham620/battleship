@@ -55,7 +55,6 @@ class Gameboard {
                 return { valid: false, notTaken: false, shipCells: [] };
             }
             shipCells.push(allBoardCells[index]);
-            console.log(shipCells);
         }
         //ensures that all targeted cells are free
         let notTaken = shipCells.every(shipCell => !shipCell.classList.contains('taken'));

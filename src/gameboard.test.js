@@ -1,46 +1,72 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import Gameboard from '../src/gameboard.js';
-import Ship from '../src/ship.js';
 
-describe('Gameboard', () => {
-    let gameboard;
 
-    beforeEach(() => {
-        gameboard = Gameboard();
-    });
+describe('Gameboard Class', () => {
+  let gameboard;
 
-    test.skip('should place ship at specific coordinates(horizonatal)', () => {
-        gameboard.placeShip(3, 0, 0);
-        const board = gameboard.getBoard();
-        expect(board[0][0].length).toBe(3);
-        expect(board[3][0]).toBeNull();
-    });
-    test.skip('should place ship at specific coordinates(vertical)', () => {
-        gameboard.placeShip(2, 0, 2, true);
-        const board = gameboard.getBoard();
-        expect(board[0][2].length).toBe(2);
-        expect(board[0][3]).toBeNull();
-    });
-    test.skip('should record a missed attack', () => {
-        gameboard.receiveAttack(0, 0);
-        expect(gameboard.getMissedAttacks()).toEqual([{ x: 0, y: 0 }]);
-        expect(gameboard.getBoard()[0][0]).toBe('miss');
-    });
-    test.skip('should send a hit to specified ship', () => {
-        const ship = Ship(2);
-        gameboard.placeShip(ship.length, 0, 0);
-        gameboard.receiveAttack(0, 0);
-        const board = gameboard.getBoard();
-        expect(board[0][0]).toBe('hit');
-    });
-    test.skip('should report when all ships are sunk', () => {
-        gameboard.placeShip(1, 0, 0); 
-        gameboard.receiveAttack(0, 0);
-        expect(gameboard.allShipsSunk()).toBe(true);
-    });
-    test.skip('should report false if all ships are sunk', () => {
-        gameboard.placeShip(1, 0, 0);
-        gameboard.placeShip(2, 5, 5);
-        gameboard.receiveAttack(0, 0);
-        expect(gameboard.allShipsSunk()).toBe(false);
-    });
-})
+  beforeEach(() => {
+    // Set up DOM elements required by the class
+    document.body.innerHTML = '<div id="player-board"></div>';
+    gameboard = new Gameboard('player-board');
+  });
+
+  test('initializes empty 10x10 board', () => {
+    expect(gameboard.board.length).toBe(10);
+    expect(gameboard.board[0].length).toBe(10);
+    expect(gameboard.ships.length).toBe(0);
+  });
+
+  test('renderBoard creates 100 cells', () => {
+    gameboard.renderBoard('player-board');
+    const cells = document.querySelectorAll('.cell');
+    expect(cells.length).toBe(100);
+  });
+
+  test('getValidity allows valid horizontal placement', () => {
+    gameboard.renderBoard('player-board');
+    const allCells = document.querySelectorAll('.cell');
+    const ship = { name: 'des', length: 3 };
+    // Ship length 3, horizontal, at index 0 (0,1,2)
+    const result = gameboard.getValidity(allCells, true, 0, 0, ship);
+    expect(result.valid).toBe(true);
+    expect(result.notTaken).toBe(true);
+    expect(result.shipCells.length).toBe(3);
+  });
+
+  test('getValidity blocks invalid vertical boundary', () => {
+    gameboard.renderBoard('player-board');
+    const allCells = document.querySelectorAll('.cell');
+    const ship1 = { name: 'dest', length: 5 }
+    // Ship length 5, vertical, starts near bottom, index 95 (too low)
+    const result = gameboard.getValidity(allCells, false, 9, 5, ship1);
+    expect(result.valid).toBe(false);
+  });
+
+  test('placeShip marks cells as taken', () => {
+    gameboard.renderBoard('player-board');
+    const ship2 = { name: 'destr', length: 2 };
+    // Place horizontally at index 0
+    gameboard.placeShip('player-board', ship2, 0, 0, false);
+    
+    const cell0 = document.getElementById('0');
+    const cell1 = document.getElementById('1');
+    expect(cell0.classList.contains('taken')).toBe(true);
+    expect(cell1.classList.contains('taken')).toBe(true);
+  });
+
+  test('getValidity prevents overlapping ships', () => {
+    gameboard.renderBoard('player-board');
+    const ship3 = { name: 'carrier', length: 5 };
+    gameboard.placeShip('player-board', ship3, 0, 0, false); // Places at 0,1,2,3,4
+    
+    const allCells = document.querySelectorAll('.cell');
+    // Try to place another ship over the same area
+    const ship4 = {name: 'destro', length: 2 };
+    const result = gameboard.getValidity(allCells, true, 0, 2, ship4);
+    expect(result.notTaken).toBe(false);
+  });
+});
