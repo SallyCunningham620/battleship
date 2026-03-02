@@ -8,17 +8,16 @@ const infoDisplay = document.getElementById('game-message');
 const turnDisplay = document.getElementById('turn-message');
 
 const shipsContainer = document.querySelector('.ships-container');
-const flipButton = document.getElementById('flip');
-const startButton = document.getElementById('start-button');
-const resetButton = document.getElementById('reset-button');
 
 let isPlayerTurn = true;
-let gameActive = true;
-let isVertical = false;
+global.gameActive = false;
+let computerTurnTimer;
+global.isVertical = false;
 let notDropped = true;
-let draggedShip;
+global.draggedShip;
 let alreadyAttacked;
 let playerShips = shipFleet();
+let playerShipsPlaced = [];
 let computerShips = shipFleet();
 let playerAttacks = [];
 let computerAttacks = [];
@@ -38,13 +37,16 @@ function shipFleet() {
 
 //reset game
 function resetGame() {
+    console.log('resetGame');
     isPlayerTurn = true;
-    gameActive = true;
-    isVertical = false;
+    global.gameActive = false;
+    clearTimeout(computerTurnTimer);
+    global.isVertical = false;
     notDropped = true;
-    draggedShip = undefined;
+    global.draggedShip = undefined;
     alreadyAttacked;
     playerShips = shipFleet();
+    playerShipsPlaced = [];
     computerShips = shipFleet();
     playerAttacks = [];
     computerAttacks = [];
@@ -62,75 +64,104 @@ function resetGame() {
         cell.removeEventListener('click', handleCellClick); //remove listener
     });
 
-    shipsContainer.innerHTML = `
+    if(shipsContainer) {
+        shipsContainer.style.flexWrap = 'wrap';
+        shipsContainer.innerHTML = `
             <div id="0" class="destroyer-size destroyer horizontal" data-size="2" draggable="true"></div>
             <div id="1" class="submarine-size submarine horizontal" data-size="3" draggable="true"></div>
             <div id="2" class="cruiser-size cruiser horizontal" data-size="3" draggable="true"></div>
             <div id="3" class="battleship-size battleship horizontal" data-size="4" draggable="true"></div>
             <div id="4" class="carrier-size carrier horizontal" data-size="5" draggable="true"></div>
     `;
-
     //recreate ship options
     const newShipOptions = Array.from(shipsContainer.children);
-    
+
     newShipOptions.forEach(shipOption => {
         shipOption.addEventListener('dragstart', dragStart); //drag listener
     });
+    }
 
     updateMessage('Game reset. Place your ships and click start.');
     turnMessage('');
     placeComputerShipsRandomly();
     dragOverNDrop();
 }
-resetButton.addEventListener('click', resetGame);
+document.addEventListener('DOMContentLoaded', (event) => {
+    const flipButton = document.getElementById('flip-button');
+    const startButton = document.getElementById('start-button');
+    const resetButton = document.getElementById('reset-button');
+    if (resetButton) {
+        resetButton.addEventListener('click', resetGame);
+    } else {
+        console.log('Reset button element not found!');
+    }
+    if (flipButton) {
+        flipButton.addEventListener('click', flip);
+    } else {
+        console.log('Flip button element not found!');
+    }
+    if (startButton) {
+        startButton.addEventListener ('click', startGame);
+    } else {
+        console.log('Start button element not found!');
+    }
+})
 
 function flip() {
+    const currentShipsContainer = document.querySelector('.ships-container');
     //flip ships horizontal and vertical
-    isVertical = !isVertical;
-    //adjust container for flip
-    shipsContainer.style.flexWrap = isVertical ? 'nowrap' : 'wrap';
-    //select ships
-    const shipsArr = Array.from(shipsContainer.children)
-    shipsArr.forEach(shipArr => {
-        //switch class names
-        if (isVertical) {
-            shipArr.classList.remove('horizontal');
-            shipArr.classList.add('vertical');
-        } else {
-            shipArr.classList.remove('vertical');
-            shipArr.classList.add('horizontal');
-    }
-        })
-    //dragOverNDrop();
-    };
+    global.isVertical = !global.isVertical;
 
-flipButton.addEventListener('click', flip);
+    //adjust container for flip
+    if(currentShipsContainer) {
+        currentShipsContainer.classList.toggle('vertical', global.isVertical);
+        currentShipsContainer.classList.toggle('horizontal', !global.isVertical);
+
+        currentShipsContainer.style.flexWrap = global.isVertical ? 'nowrap' : 'wrap';
+        //select ships
+        const shipsArr = Array.from(currentShipsContainer.children)
+        shipsArr.forEach(shipArr => {
+            if (global.isVertical) {
+                shipArr.classList.add('vertical');
+                shipArr.classList.remove('horizontal');
+            } else {
+                shipArr.classList.add('horizontal');
+                shipArr.classList.remove('vertical');
+            }
+        })
+    }
+};
 
 function dragStart(e) {
-    draggedShip = e.target;
-    //e.dataTransfer.setData('text/plain', e.target.id);
+    global.draggedShip = e.target;
 }
 
 function dragOver(e) {
     e.preventDefault();
     //select with id
-    const ship = playerShips[draggedShip.id];
-    player.board.hoverArea(Number(e.target.dataset.x), Number(e.target.dataset.y), ship, isVertical);
+    const ship = playerShips[global.draggedShip.id];
+    console.log(global.isVertical);
+    player.board.hoverArea(Number(e.target.dataset.x), Number(e.target.dataset.y), ship, global.isVertical);
 }
 
 function dropShip(e) {
+    //console.log('1');
     e.preventDefault();
-    if (!draggedShip) return;
+    if (!global.draggedShip) return;
 
     const startRow = Number(e.target.dataset.x);
     const startCol = Number(e.target.dataset.y);
-    const ship = playerShips[draggedShip.id];
-
+    const ship = playerShips[global.draggedShip.id];
     //place ship when dropped
-    const success = player.board.placeShip('player-board', ship, startRow, startCol, isVertical)
+    const success = player.board.placeShip('player-board', ship, startRow, startCol, global.isVertical)
     if (success) {
-        draggedShip.remove();
+        playerShipsPlaced.push(ship);
+        global.draggedShip.remove();
         notDropped = false;
+        if (playerShipsPlaced.length >= 5) {
+            console.log('2');
+            global.gameActive = true;
+        }
     }
 }
 
@@ -149,23 +180,25 @@ function startGame() {
         if (shipsContainer.children.length != 0) {
             updateMessage('Please place all your ships first and then click start.');
         } else {
+            isPlayerTurn = true;
             //select all computer cells
             const allBoardCells = document.querySelectorAll('#computer-board .cell');
             allBoardCells.forEach(cell => cell.addEventListener('click', handleCellClick));
-            isPlayerTurn = true;
             turnMessage('Your turn.');
             updateMessage('Game started. Select a cell to attack on the computer board.');
         }
     }
 }
 
-startButton.addEventListener ('click', startGame);
-
 function computerTurn() {
-    if (gameActive) {
+    console.log(global.gameActive);
+    //console.log();
+    if (global.gameActive) {
+        console.log('2');
         turnMessage('Computer Turn!');
         updateMessage(' The computer is thinking...');
-        setTimeout(() => {
+        computerTurnTimer = setTimeout(() => {
+            console.log('3');
             const {ship, cell, shipName} = computer.computerAttack(playerShips)
             if (ship && !ship.sunk) {
                 ship.hit(); //increment ship hits
@@ -191,15 +224,14 @@ function computerTurn() {
             const allComputerCells = document.querySelectorAll('#computer-board .cell');
             allComputerCells.forEach(cell => cell.addEventListener('click', handleCellClick));
         }, 4000);
-
-    } else { 
-        alert('The game is over. Reset the game to play again');
-        return;
+    } else {
+        console.log('Error with computerTurn');
     }
+
 }
 
 function handleCellClick(e) {
-    if (gameActive && isPlayerTurn) {
+    if (global.gameActive && isPlayerTurn) {
         const { ship, shipName, alreadyAttacked } = player.playerAttack(e, computerShips);
         if (alreadyAttacked) {
             updateMessage('Cell already attacked, please try again.');
@@ -224,7 +256,7 @@ function handleCellClick(e) {
         //select computer cells
         const allBoardCells = document.querySelectorAll('#computer-board .cell');
         allBoardCells.forEach(cell => cell.replaceWith(cell.cloneNode(true)));
-        setTimeout(computerTurn, 3000);
+        computerTurnTimer = setTimeout(computerTurn, 3000);
     } else {
         alert('The game is over. Reset the game to play again');
         return;
@@ -237,14 +269,14 @@ function gameActiveCheck(user, userSunkShips) {
         if (userSunkShips.length === 5) {
             updateMessage('You sunk all the computer ships. YOU WON!');
             turnMessage('');
-            gameActive = false;
+            global.gameActive = false;
        }
     }
     if (user === 'computer-board') {
         if (userSunkShips.length === 5) {
             updateMessage(' The computer sunk all your ships. You lost.');
             turnMessage('');
-            gameActive = false;
+            global.gameActive = false;
         }
     }
 }
@@ -260,10 +292,14 @@ function renderBoards() {
 }
 
 function updateMessage(msg) {
-    infoDisplay.textContent = msg;
+    if (infoDisplay) {
+        infoDisplay.textContent = msg;
+    }
 }
 function turnMessage(msg) {
-    turnDisplay.textContent = msg;
+    if(turnDisplay) {
+        turnDisplay.textContent = msg;
+    }
 }
 
 function initGame() {
@@ -279,4 +315,4 @@ function initGame() {
     dragOverNDrop();
     updateMessage("Please place your ships and click Start.");
 }
-export {shipFleet, initGame}
+export {shipFleet, dragStart, dropShip, resetGame, flip, initGame}
