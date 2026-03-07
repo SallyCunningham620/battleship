@@ -7,6 +7,10 @@ class Ship {
         this.sunk = false;
     }
 
+    getHits() {
+        return this.hits;
+    }
+
     hit() {
         if (!this.sunk) {
             this.hits++;
