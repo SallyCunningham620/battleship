@@ -1,4 +1,4 @@
-# battleship
+# Battleship
 
 Battleship built using TDD testing and webpack. 
 HTML page set up, 
