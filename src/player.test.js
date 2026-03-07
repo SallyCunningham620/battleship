@@ -13,10 +13,6 @@ describe('Player Factory Function', () => {
     let enemyBoard;
 
     beforeEach(() => {
-        /*enemyBoard = {
-            receiveAttack: jest.fn()
-        };
-        Gameboard.mockReturnValue(enemyBoard);*/
         player = new Player('One', true);
         computer = new Player('Computer', true);
         document.body.innerHTML = `

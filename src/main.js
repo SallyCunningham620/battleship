@@ -313,7 +313,6 @@ function initGame() {
     //select and drag player ships
     const shipOptions = Array.from(shipsContainer.children);
     shipOptions.forEach(shipOption => {
-        // shipOption.setAttribute('draggable', true);
         shipOption.addEventListener('dragstart', dragStart)
     });
     dragOverNDrop();
