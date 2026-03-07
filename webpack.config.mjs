@@ -1,3 +1,4 @@
+//import webpack from 'webpack';
 import path from 'path';
 import HtmlWebpackPlugin from'html-webpack-plugin';
 
@@ -18,6 +19,9 @@ export default {
       template: './src/index.html',
       title: 'Battleship Game',
     }),
+//    new webpack.DefinePlugin({
+  //    global: 'window',
+    //}),
   ],
   module: {
   rules: [

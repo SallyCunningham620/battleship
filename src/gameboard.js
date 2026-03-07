@@ -59,11 +59,16 @@ class Gameboard {
         //ensures that all targeted cells are free
         let notTaken = shipCells.every(shipCell => !shipCell.classList.contains('taken'));
         let valid = true;     
+
         return {shipCells, valid, notTaken};
     }
 
 
-    placeShip(user, ship, row, col, isVertical) {
+    placeShip(user, ship, row, col, isVertical, attempts = 0) {
+        if (attempts >= 5) {
+            return false; // Stop recursion
+        }
+        
         //select user cells
         const allBoardCells = document.querySelectorAll(`#${user} .cell`);
         let randomBoolean = Math.random() < 0.5;
@@ -72,11 +77,9 @@ class Gameboard {
         let randomColIndex = Math.floor(Math.random() * 10); 
 
         let startRow = (row !== null && row !== undefined) ? row : randomRowIndex;
-
         let startCol = (col !== null && col !== undefined) ? col : randomColIndex;  
 
         const {shipCells, valid, notTaken } = this.getValidity(allBoardCells, isHorizontal, startRow, startCol, ship);
-
         if (valid && notTaken) {
             shipCells.forEach(shipCell => {
                 shipCell.classList.add(ship.name);
@@ -84,8 +87,8 @@ class Gameboard {
             })
             return true;
         } else {
-        if (user === 'computer-board') this.placeShip(user, ship);
-        if (user === 'player-board') return false;
+            if (user === 'computer-board') return this.placeShip(user, ship, null, null, null, attempts + 1);
+            if (user === 'player-board') return false;
     }
 }
       
