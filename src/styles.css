@@ -58,14 +58,24 @@ h2 {
 
 .ships-container {
     width: 300px;
-    height: 160px;
+    height: auto;
     margin: 30px 0;
+    padding: 20px;
     background-color: yellow;
     display: flex;
-    flex-wrap: wrap !important;
+    flex-direction: row;
+    flex-wrap: wrap;
     justify-content: space-evenly;
     align-items: center;
 }
+/*
+.ships-container.vertical {
+  flex-direction: row;
+}
+
+.ships-container.horizontal {
+  flex-direction: row;
+}*/
 
 .btn-box {
     display: flex;
@@ -106,9 +116,9 @@ button {
 #computer-board .carrier {
     background-color: #eee
 }
-/* Ship Styling */
+/* Ship Styling 
 .horizontal { display: flex;}
-.vertical { display: flex; flex-direction: column;}
+/.vertical { display: flex; flex-direction: column;}*/
 
 /* Dynamic Size*/
 .destroyer-size.horizontal { width: 60px; height: 30px; margin: 3px}
