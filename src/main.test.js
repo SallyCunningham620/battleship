@@ -3,18 +3,22 @@
  */
 
 import { shipFleet, dragStart, dropShip, resetGame, flip } from './main.js';
+import Player from './player.js';
+import Gameboard from './gameboard.js';
+
+// Mocks the entire gameboard.js file
+jest.mock('./gameboard.js');
 
  // Mock DOM structure
+    const mockPlaceShip = jest.fn(() => true);
     const mockBoard = {
         resetBoard: jest.fn(),
-        placeShip: jest.fn(() => true),
+        placeShip: mockPlaceShip,
         hoverArea: jest.fn(),
         renderBoard: jest.fn(),
     }
 
-    global.player = {board: mockBoard}
     global.computer = { board: mockBoard, computerAttack: jest.fn() };
-    //global.shipsContainer = document.querySelector('.ships-container');
     global.infoDisplay = document.getElementById('game-message');
     global.turnDisplay = document.getElementById('turn-message');
     global.handleCellClick = jest.fn();
@@ -26,7 +30,6 @@ import { shipFleet, dragStart, dropShip, resetGame, flip } from './main.js';
 
     global.isPlayerTurn = true;
     global.gameActive = false;
-    //global.isVertical = true;
     global.playerShips = shipFleet();
     global.computerShips = [];
 
@@ -34,10 +37,14 @@ import { shipFleet, dragStart, dropShip, resetGame, flip } from './main.js';
 describe('Battleship Game Functions', () => {
     let mockEvent;
     let mockDraggedShip;
-    let playerBoard;
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        jest.clearAllMocks();        
+        
+        Gameboard.mockImplementation(() => mockBoard);
+        globalThis.player = new Player("Human");
+        globalThis.player.board = mockBoard;
+
         global.isVertical = false;
         global.playerShipsPlaced = [];
         global.gameActive = false;
@@ -71,21 +78,17 @@ describe('Battleship Game Functions', () => {
             { id: 3, length: 4},
             { id: 4, length: 5},
         ];
-        global.player = {
-            board: {
-                placeShip: jest.fn().mockReturnValue(true)
-            }
-        };
+
         mockEvent = {
             preventDefault: jest.fn(), target: {
-                dataset: {x: '0', y: '0'}
+                dataset: {x: '1', y: '1'}
             }
         }
     });
 
     test('shipFleet() returns a list of 5 ships with correct lengths', () => {
         const fleet = shipFleet();
-        expect(fleet.length).toBe(5);
+        expect(fleet.length).toBe(5); // 5 ships
         expect(fleet[0].length).toBe(2); // destroyer
         expect(fleet[4].length).toBe(5); // carrier
     });
@@ -134,10 +137,14 @@ describe('Battleship Game Functions', () => {
         const mockEvent = { target: document.getElementById('0') };
         dragStart(mockEvent); 
         expect(global.draggedShip.id).toBe('0');
-        //expect(global.notDropped).toBe(false);
     });
 
-     test('should prevent default on drop', () => {
+     test('Player initializes with a mocked board', () => {
+        expect(globalThis.player.board).toBeDefined();
+        expect(Gameboard).toHaveBeenCalled();
+    });
+
+    test('should prevent default on drop', () => {
         dropShip(mockEvent);
         expect(mockEvent.preventDefault).toHaveBeenCalled();
     })
@@ -151,23 +158,12 @@ describe('Battleship Game Functions', () => {
                 <div id="0" class="destroyer-size" data-size="2" draggable="true"></div>
             </div>
         `;
-        // Setup state
-        global.draggedShip = document.getElementById('0');
-        global.playerShips = { "0": { name: 'destroyer', length: 2 } }; 
-        global.playerShipsPlaced = []; 
-        global.notDropped = true;
-        global.isVertical = false;
-
-        mockBoard.placeShip.mockReturnValue(true);
-
-        const mockEvent = { 
-            target: document.querySelector('.cell'), 
-            preventDefault: jest.fn() 
-        };
+  
         // Execute drop
         dropShip(mockEvent);
-        expect(player.board.placeShip).toHaveBeenCalled();
-        expect(global.player.board.placeShip).toHaveBeenCalledWith(
+        expect(mockPlaceShip).toHaveBeenCalled();
+        expect(globalThis.player.board.placeShip).toHaveBeenCalled();
+        expect(globalThis.player.board.placeShip).toHaveBeenCalledWith(
             'player-board', expect.any(Object), 1, 1, false
         );
     });

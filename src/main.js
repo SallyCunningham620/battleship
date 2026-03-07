@@ -1,9 +1,10 @@
 // src/main.js
 import Ship from './ship.js';
 import Player from './player.js';
+
 //define const and let
-const player = new Player("Human");
-const computer = new Player("Computer", true);
+globalThis.player = new Player("Human");
+globalThis.computer = new Player("Computer", true);
 const infoDisplay = document.getElementById('game-message');
 const turnDisplay = document.getElementById('turn-message');
 
@@ -12,6 +13,7 @@ const shipsContainer = document.querySelector('.ships-container');
 let isPlayerTurn = true;
 global.gameActive = false;
 let computerTurnTimer;
+let playerTurnTimer;
 global.isVertical = false;
 let notDropped = true;
 global.draggedShip;
@@ -41,6 +43,7 @@ function resetGame() {
     isPlayerTurn = true;
     global.gameActive = false;
     clearTimeout(computerTurnTimer);
+    clearTimeout(playerTurnTimer);
     global.isVertical = false;
     notDropped = true;
     global.draggedShip = undefined;
@@ -65,7 +68,7 @@ function resetGame() {
     });
 
     if(shipsContainer) {
-        shipsContainer.style.flexWrap = 'wrap';
+        shipsContainer.style.flexWrap = 'wrap'; //return to wrap
         shipsContainer.innerHTML = `
             <div id="0" class="destroyer-size destroyer horizontal" data-size="2" draggable="true"></div>
             <div id="1" class="submarine-size submarine horizontal" data-size="3" draggable="true"></div>
@@ -86,6 +89,8 @@ function resetGame() {
     placeComputerShipsRandomly();
     dragOverNDrop();
 }
+
+//flip, start, and reset eventlistener after page load
 document.addEventListener('DOMContentLoaded', (event) => {
     const flipButton = document.getElementById('flip-button');
     const startButton = document.getElementById('start-button');
@@ -140,12 +145,10 @@ function dragOver(e) {
     e.preventDefault();
     //select with id
     const ship = playerShips[global.draggedShip.id];
-    console.log(global.isVertical);
     player.board.hoverArea(Number(e.target.dataset.x), Number(e.target.dataset.y), ship, global.isVertical);
 }
 
 function dropShip(e) {
-    //console.log('1');
     e.preventDefault();
     if (!global.draggedShip) return;
 
@@ -153,13 +156,13 @@ function dropShip(e) {
     const startCol = Number(e.target.dataset.y);
     const ship = playerShips[global.draggedShip.id];
     //place ship when dropped
-    const success = player.board.placeShip('player-board', ship, startRow, startCol, global.isVertical)
+    const success = globalThis.player.board.placeShip('player-board', ship, startRow, startCol, global.isVertical)
     if (success) {
         playerShipsPlaced.push(ship);
         global.draggedShip.remove();
         notDropped = false;
+        //all ships placed before gameActive
         if (playerShipsPlaced.length >= 5) {
-            console.log('2');
             global.gameActive = true;
         }
     }
@@ -191,14 +194,12 @@ function startGame() {
 }
 
 function computerTurn() {
-    console.log(global.gameActive);
-    //console.log();
+    //requires gameActive
     if (global.gameActive) {
-        console.log('2');
         turnMessage('Computer Turn!');
         updateMessage(' The computer is thinking...');
+        //reset computerTurnTimer will be reset above
         computerTurnTimer = setTimeout(() => {
-            console.log('3');
             const {ship, cell, shipName} = computer.computerAttack(playerShips)
             if (ship && !ship.sunk) {
                 ship.hit(); //increment ship hits
@@ -216,7 +217,8 @@ function computerTurn() {
             }
         }, 2000)
 
-        setTimeout(() => {
+        //reset playerTurnTimer will be reset above
+        playerTurnTimer = setTimeout(() => {
             isPlayerTurn = true;
             turnMessage('Player Go!');
             updateMessage('Select a cell to attack on the computer board.');
@@ -226,6 +228,8 @@ function computerTurn() {
         }, 4000);
     } else {
         console.log('Error with computerTurn');
+        alert('The game is over. Reset the game to play again');
+        return;
     }
 
 }
