@@ -24,7 +24,6 @@ class Player {
             let shipName = classes.find(c => c !== 'cell' && c !== 'taken' && c !== 'hit');
             // find ship instance from your playerShips array
             let ship = playerShips.find(s => s.name === shipName); 
-    
             return { ship, cell, shipName};  
         } else {
             cell.classList.add('miss');

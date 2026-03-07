@@ -1,60 +1,84 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import Player from '../src/player.js';
 import Gameboard from '../src/gameboard.js';
 
 jest.mock('../src/gameboard.js');
 
 describe('Player Factory Function', () => {
-
+    let player;
+    let computer;
     let enemyBoard;
 
     beforeEach(() => {
-        enemyBoard = {
+        /*enemyBoard = {
             receiveAttack: jest.fn()
         };
-        Gameboard.mockReturnValue(enemyBoard)
+        Gameboard.mockReturnValue(enemyBoard);*/
+        player = new Player('One', true);
+        computer = new Player('Computer', true);
+        document.body.innerHTML = `
+            <div id="player-board"></div>
+            <div id="computer-board"></div>
+            `;
+        for (let i = 0; i < 100; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            document.getElementById('player-board').appendChild(cell);
+        };
     });
 
-    test.skip('Player object has a name and gameboard instance', () => {
-        const player = Player('One', true);
+    test('Player object has a name and gameboard instance', () => {
         expect(player.name).toBe('One');
-        expect(player.gameboard).toBeDefined();
+        expect(player.board).toBeDefined();
         expect(player.isComputer).toBe(true);
     });
 
-    test.skip('Create a computer player', () => {
-        const computer = Player('Computer', true);
-
+    test('Create a computer player', () => {
         expect(computer.isComputer).toBe(true);
     });
 
-    test.skip('human player attack enemy board at specific coord.', () => {
-        const player = Player('Player1');
-        player.attackEnemey(enemyBoard, 2, 3)
-
-        expect(enemyBoard.receiveAttack).toHaveBeenCalledWith(2, 3);
+    test('computerAttack should fire at a random cell and handle misses', () => {
+        const result = computer.computerAttack([]);
+        expect(result.cell).toBeDefined();
+        expect(document.querySelectorAll('.miss').length).toBe(1);
     });
 
-    test.skip('computer player attacks random coord. on enemy board', () => {
-        const computer = Player('Computer', true);
-        computer.attackEnemey(enemyBoard);
+    test('computerAttack should detect a hit on a ship', () => {
+        // Setup a fake ship on the board
+        const cells = document.querySelectorAll('#player-board .cell');
+        cells[0].classList.add('taken', 'destroyer');
 
-        expect(enemyBoard.receiveAttack).toHaveBeenCalledWith(
-            expect.any(Number),
-            expect.any(Number)
-        );
+        jest.spyOn(Math, 'random').mockReturnValue(0);
+
+        const mockShip = [{ name: 'destroyer', hit: jest.fn() }];
+        const result = computer.computerAttack(mockShip);
+        expect(result.shipName).toBe('destroyer');
+        expect(cells[0].classList.contains('hit')).toBe(false);
+        expect(result.cell).toBe(cells[0]);
+
+        Math.random.mockRestore();
     });
 
-    test.skip('computer player does not repeat attacks', () => {
-        const computer = Player('Computer', true);
-        
-        for (let i = 0; i < 100; i++) {
-            computer.attackEnemey(enemyBoard);
-        }
+    test('playerAttack should prevent attacking already hit cells', () => {
+        const cell = document.createElement('div');
+        cell.classList.add('hit');
+        const mockEvent = { target: cell };
 
-        const attackCoords = computer.getAttackedCoordinates();
-        const uniqueCoords = new Set(Array.from(attackCoords));
-
-        expect(uniqueCoords.size).toBe(100);
-        expect(enemyBoard.receiveAttack).toHaveBeenCalledTimes(100);
+        const result = player.playerAttack(mockEvent, []);
+        expect(result.alreadyAttacked).toBe(true);
     });
+
+    test('playerAttack should register a miss', () => {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        const mockEvent = { target: cell };
+
+        const result = player.playerAttack(mockEvent, []);
+        expect(cell.classList.contains('miss')).toBe(true);
+        expect(result.ship).toBeNull();
+    });
+
 })
